@@ -3,65 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Update - Iligan City</title>
+    <title>Weather Update - Dynamic Map</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
     <div class="weather-container">
         <header class="weather-header">
-            <h1>Weather Update - Iligan City</h1>
+            <h1>Weather Update</h1>
+            <div class="searchWrapper">
+                <input type="text" id="cityInput" placeholder="Search City Name">  
+                <button id="searchButton">Search</button>
+            </div>
+            <iframe id="weather-map" class="map"
+                src="https://embed.windy.com/embed2.html?lat=8.2280&lon=124.2452&zoom=5&level=surface&overlay=wind&product=ecmwf&menu=&message=true&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=8.2280&detailLon=124.2452&metricWind=default&metricTemp=default&radarRange=-1"
+                frameborder="0"></iframe>
         </header>
-        <div class="container" id="weather">
-        </div>
+        <div class="container" id="weather"></div>
     </div>
     <footer>Grace G. Getungo-8/15/2024</footer>
 
     <script>
     document.addEventListener('DOMContentLoaded', async function() {
         const apiKey = 'f15a81f7b8a84c9abd003317242208';
-        const cityName = 'Iligan';
-        const apiEndpoint = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${cityName}&days=7`;
+        let cityName = 'Iligan'; 
 
-        try {
-            const response = await fetch(apiEndpoint); // Wait for the fetch to complete
-            const weatherData = await response.json(); // Wait for the response to be parsed into JSON
-            console.log(weatherData);
+        
+        async function fetchWeather(city) {
+            const apiEndpoint = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=7`;
 
-            const weatherContainer = document.getElementById('weather');
+            try {
+                const response = await fetch(apiEndpoint); 
+                const weatherData = await response.json(); 
+                console.log(weatherData);
 
-            // Iterate over each day in the forecast
-            weatherData.forecast.forecastday.forEach(element => {
-                weatherContainer.innerHTML += `
-                <div class="weather-data">
+                const weatherContainer = document.getElementById('weather');
+                weatherContainer.innerHTML = ''; 
+                
+                weatherData.forecast.forecastday.forEach(element => {
+                    weatherContainer.innerHTML += `
+                    <div class="weather-data">
+                        <div class="weather-item">
+                            <span class="label">Date:</span>
+                            <span class="value">${element.date}</span>
+                        </div>
+                        <div class="weather-item">
+                            <span class="label">Weather Information:</span>
+                            <span class="value">${element.day.condition.text}</span>
+                        </div>
+                        <div class="weather-item">
+                            <span class="label">Temperature:</span>
+                            <span class="value">${element.day.avgtemp_c}°C</span>
+                        </div>
+                        <div class="weather-item">
+                            <span class="label">Humidity:</span>
+                            <span class="value">${element.day.avghumidity}%</span>
+                        </div>
+                        <div class="weather-item">
+                            <span class="label"></span>
+                            <p><img src="https:${element.day.condition.icon}" alt="Weather icon"></p>
+                        </div>
+                    </div>
+                    `;
+                });
 
-                    <div class="weather-item">
-                        <span class="label">Date:</span>
-                        <span class="value">${element.date}</span>
-                    </div>
-                    <div class="weather-item">
-                        <span class="label">Weather Information:</span>
-                        <span class="value">${element.day.condition.text}</span>
-                    </div>
-                    <div class="weather-item">
-                        <span class="label">Temperature:</span>
-                        <span class="value">${element.day.avgtemp_c}°C</span>
-                    </div>
-                    <div class="weather-item">
-                        <span class="label">Humidity:</span>
-                        <span class="value">${element.day.avghumidity}%</span>
-                    </div>
-                    <div class="weather-item">
-                        <span class="label"></span>
-                        <p><img src="https:${element.day.condition.icon}" alt="Weather icon"></p>
-                    </div>
-                </div>
-                `;
-            });
-          
-        } catch (error) {
-            const weatherContainer = document.getElementById('weather');
-            weatherContainer.innerHTML = `<p>Unable to retrieve weather data: ${error.message}</p>`;
+                
+                const lat = weatherData.location.lat;
+                const lon = weatherData.location.lon;
+                updateMap(lat, lon);
+
+            } catch (error) {
+                const weatherContainer = document.getElementById('weather');
+                weatherContainer.innerHTML = `<p>Unable to retrieve weather data: ${error.message}</p>`;
+            }
         }
+
+       
+        function updateMap(lat, lon) {
+            const mapIframe = document.getElementById('weather-map');
+            const newMapSrc = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&zoom=5&level=surface&overlay=wind&product=ecmwf&menu=&message=true&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=default&metricTemp=default&radarRange=-1`;
+            mapIframe.src = newMapSrc;
+        }
+
+       
+        document.getElementById('searchButton').addEventListener('click', function () {
+            const cityInput = document.getElementById('cityInput').value;
+            if (cityInput) {
+                cityName = cityInput;
+                fetchWeather(cityName); 
+            } else {
+                alert('Please enter a city name.');
+            }
+        });
+
+        
+        fetchWeather(cityName);
     });
     </script>
 </body>
